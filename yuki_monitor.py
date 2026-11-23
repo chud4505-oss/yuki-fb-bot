@@ -191,6 +191,7 @@ def monitor():
     pages_to_scan = build_page_list()
     
     print(f"🚀 {BOT_NAME} đã sẵn sàng! Bắt đầu quét {len(pages_to_scan)} Fanpage...")
+    send_telegram("🤖 Bot Yuki 2 đã kết nối thành công với Telegram!")
     if not cookies:
         print("⚠️ Cảnh báo: Bắt buộc nên có cookies.txt khi quét 28 page để tránh bị FB chặn!")
 
