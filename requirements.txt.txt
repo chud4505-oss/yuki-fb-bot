@@ -2,4 +2,5 @@ requests
 facebook-scraper
 beautifulsoup4
 lxml
+lxml_html_clean
 flask
