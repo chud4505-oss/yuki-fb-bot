@@ -1,0 +1,5 @@
+requests
+facebook-scraper
+beautifulsoup4
+lxml
+flask
