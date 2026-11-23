@@ -1,7 +1,6 @@
 import time
 import json
 import os
-import re
 import threading
 import requests
 from datetime import datetime, timezone, timedelta
@@ -13,70 +12,73 @@ TELEGRAM_TOKEN = "9053069383:AAHLYyltFj0TnGYosJ7pjUWtVrXthDf_i0Q"
 CHAT_ID = "9012032761"
 BOT_NAME = "Yuki 2 (VAA)"
 
-# Danh sách 28 Fanpage cần theo dõi (Bao gồm username, ID số và link /share/)
-RAW_PAGES = [
+# Danh sách 29 Fanpage chuẩn xác 100%
+PAGES = [
     # 1. Trung tâm nghiên cứu và phát triển số
-    "https://www.facebook.com/share/1dgGyoXTVj/",
-    # 2. Đoàn hội khoa kỹ thuật hàng không
-    "https://www.facebook.com/share/1CNVF6gczy/",
-    # 3. Đoàn hội khoa khai thác hàng không
-    "https://www.facebook.com/share/1E2FRrGoRm/",
-    # 4. Đoàn hội khoa quản trị kinh doanh
-    "https://www.facebook.com/share/18wH6FkSkm/",
-    # 5. VAA Global-Citizen Students Club - GLOCIS
-    "https://www.facebook.com/share/1Eo824EEth/",
-    # 6. Đoàn hội khoa kinh tế hàng không
-    "https://www.facebook.com/share/1EUgstua62/",
-    # 7. Đoàn thanh niên - Hội sinh viên
+    "drd.vau",
+    # 2. Đoàn hội khoa ngoại ngữ
+    "doanhoi.khoangoaingu.vaa",
+    # 3. Đoàn hội khoa kỹ thuật hàng không
+    "doanhoikhoakythuathangkhong",
+    # 4. Đoàn hội khoa khai thác hàng không
+    "doanhoikhoakhaithachangkhong",
+    # 5. Đoàn hội khoa quản trị kinh doanh
+    "vaa.doanhoikhoaquantrikinhdoanh",
+    # 6. VAA Global-Citizen Students Club - GLOCIS
+    "61576624683756",
+    # 7. Đoàn hội khoa kinh tế hàng không
+    "doanhoi.kinhtehangkhong.vaa",
+    # 8. Đoàn thanh niên - Hội sinh viên
     "DoanTNHoiSV.VAU",
-    # 8. Khoa du lịch và dịch vụ hàng không
+    # 9. Khoa du lịch và dịch vụ hàng không
     "ftas.vaa.vn",
-    # 9. Khoa ngoại ngữ
+    # 10. Khoa ngoại ngữ
     "khoangoainguVAA",
-    # 10. CLB Lý luận trẻ
+    # 11. CLB Lý luận trẻ
     "clblyluantrevaa",
-    # 11. CLB Logistic
+    # 12. CLB Logistic
     "100092618240008",
-    # 12. CLB English
+    # 13. CLB English
     "3e.vaaec",
-    # 13. CLB Bóng chuyền
+    # 14. CLB Bóng chuyền
     "VolleyballClub.VAA",
-    # 14. Đoàn hội khoa CNTT
+    # 15. Đoàn hội khoa CNTT
     "doanhoikhoacnttvaa",
-    # 15. Đoàn hội khoa Du lịch
+    # 16. Đoàn hội khoa Du lịch
     "doanhoiftas",
-    # 16. Đoàn hội khoa Xây dựng
+    # 17. Đoàn hội khoa Xây dựng
     "61555378444748",
-    # 17. Đoàn hội khoa Điện
+    # 18. Đoàn hội khoa Điện
     "doankhoadientuvaa",
-    # 18. CLB Sinh viên 5 tốt
+    # 19. CLB Sinh viên 5 tốt
     "sv5t.hoisinhvien.vaa",
-    # 19. CLB Bóng rổ
+    # 20. CLB Bóng rổ
     "aviationbasketball",
-    # 20. CLB Tổ chức sự kiện
+    # 21. CLB Tổ chức sự kiện
     "vepc.vaa",
-    # 21. Đội CTXH
+    # 22. Đội CTXH
     "VAA.SocialWork",
-    # 22. Tình nguyện
+    # 23. Tình nguyện
     "TinhNguyenVAA",
-    # 23. CLB UAV
+    # 24. CLB UAV
     "FromUAVClub",
-    # 24. CLB AMC
+    # 25. CLB AMC
     "aviationmanagementclub",
-    # 25. CLB Nhiếp ảnh
+    # 26. CLB Nhiếp ảnh
     "vaaphotography",
-    # 26. CLB Kỹ sư trẻ
+    # 27. CLB Kỹ sư trẻ
     "KySuTreVAA",
-    # 27. Công tác sinh viên
+    # 28. Công tác sinh viên
     "100063550779612",
-    # 28. CLB Khoa học trẻ
-    "https://www.facebook.com/share/1D5zobMuVA/"
+    # 29. CLB Khoa học trẻ
+    "vaa.ys2016"
 ]
 
-# Từ khóa lọc bài sự kiện (Để trống [] nếu muốn nhận TẤT CẢ bài đăng mới từ 28 page)
+# Từ khóa lọc bài sự kiện (Để trống [] nếu muốn nhận TẤT CẢ bài đăng mới từ 29 page)
 KEYWORDS = ["đăng ký", "sự kiện", "tuyển", "link", "form", "mở đơn", "workshop", "minigame", "ctv", "cuộc thi", "hội thảo"]
 
-CHECK_INTERVAL = 60  # Nghỉ 60 giây sau khi quét xong 1 vòng 28 page
+CHECK_INTERVAL = 45       # Nghỉ 45 giây sau mỗi vòng quét 29 page
+MAX_POST_AGE_MINUTES = 30 # Gửi mọi bài đăng mới trong vòng 30 phút gần nhất
 HISTORY_FILE = "seen_posts.json"
 COOKIES_FILE = "cookies.txt"
 # ======================================================
@@ -85,50 +87,13 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return f"🤖 {BOT_NAME} đang theo dõi {len(RAW_PAGES)} Fanpage 24/7!"
+    return f"🤖 {BOT_NAME} đang theo dõi {len(PAGES)} Fanpage 24/7!"
 
 def run_web():
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
 
 VN_TZ = timezone(timedelta(hours=7))
-
-def resolve_page_identifier(item):
-    """Tự động giải mã các link facebook.com/share/... thành username hoặc ID gốc"""
-    if not item.startswith("http"):
-        return item
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-        }
-        res = requests.get(item, headers=headers, allow_redirects=True, timeout=10)
-        final_url = res.url
-        
-        # Trường hợp chuyển hướng về profile.php?id=123456
-        id_match = re.search(r"id=(\d+)", final_url)
-        if id_match:
-            return id_match.group(1)
-            
-        # Trường hợp chuyển hướng về facebook.com/username
-        user_match = re.search(r"facebook\.com/([^/?#]+)", final_url)
-        if user_match and user_match.group(1) not in ["share", "login", "profile.php"]:
-            return user_match.group(1)
-    except Exception as e:
-        print(f"[!] Không giải mã được link {item}: {e}")
-    return None
-
-def build_page_list():
-    resolved = []
-    print("🔄 Đang chuẩn hóa danh sách 28 Fanpage...")
-    for item in RAW_PAGES:
-        clean_id = resolve_page_identifier(item)
-        if clean_id:
-            resolved.append(clean_id)
-            if item.startswith("http"):
-                print(f"   ✓ Đã giải mã: {item} -> {clean_id}")
-        else:
-            print(f"   ✗ Bỏ qua link lỗi: {item}")
-    return resolved
 
 def load_seen_posts():
     if os.path.exists(HISTORY_FILE):
@@ -188,20 +153,14 @@ def format_message(title, page_name, post_time, post_url):
 def monitor():
     seen_posts = load_seen_posts()
     cookies = COOKIES_FILE if os.path.exists(COOKIES_FILE) else None
-    pages_to_scan = build_page_list()
     
-    print(f"🚀 {BOT_NAME} đã sẵn sàng! Bắt đầu quét {len(pages_to_scan)} Fanpage...")
-    send_telegram("🤖 Bot Yuki 2 đã kết nối thành công với Telegram!")
-    if not cookies:
-        print("⚠️ Cảnh báo: Bắt buộc nên có cookies.txt khi quét 28 page để tránh bị FB chặn!")
-
-    # Lần chạy đầu tiên: Đánh dấu các bài cũ đã có sẵn để tránh spam 50 tin nhắn cùng lúc
-    is_first_run = len(seen_posts) == 0
-    if is_first_run:
-        print("⏳ Lần chạy đầu tiên: Đang đồng bộ các bài viết cũ để tránh spam...")
+    print(f"🚀 {BOT_NAME} đã sẵn sàng! Bắt đầu quét {len(PAGES)} Fanpage...")
+    send_telegram(f"🤖 {BOT_NAME} đã cập nhật đủ {len(PAGES)} Fanpage và đang hoạt động!")
 
     while True:
-        for page in pages_to_scan:
+        now_utc = datetime.now(timezone.utc)
+        
+        for page in PAGES:
             try:
                 posts = get_posts(
                     page,
@@ -218,9 +177,16 @@ def monitor():
                     seen_posts.add(post_id)
                     save_seen_posts(seen_posts)
                     
-                    # Nếu là lần đồng bộ đầu tiên thì chỉ lưu ID, không gửi thông báo
-                    if is_first_run:
-                        continue
+                    # Kiểm tra thời gian đăng (chỉ báo bài trong vòng 30 phút gần nhất)
+                    raw_time = post.get("time")
+                    if isinstance(raw_time, datetime):
+                        post_utc = raw_time.replace(tzinfo=timezone.utc) if raw_time.tzinfo is None else raw_time
+                        age_minutes = (now_utc - post_utc).total_seconds() / 60
+                        if age_minutes > MAX_POST_AGE_MINUTES:
+                            continue
+                        post_time = post_utc.astimezone(VN_TZ).strftime("%d/%m/%Y %H:%M:%S")
+                    else:
+                        post_time = datetime.now(VN_TZ).strftime("%d/%m/%Y %H:%M:%S")
                         
                     text = post.get("text", "") or ""
                     if not check_keywords(text):
@@ -228,13 +194,6 @@ def monitor():
                     
                     title = extract_title(text)
                     page_name = post.get("username") or page
-                    
-                    raw_time = post.get("time")
-                    if isinstance(raw_time, datetime):
-                        post_time = raw_time.strftime("%d/%m/%Y %H:%M:%S")
-                    else:
-                        post_time = datetime.now(VN_TZ).strftime("%d/%m/%Y %H:%M:%S")
-                        
                     post_url = post.get("post_url") or f"https://www.facebook.com/{page}/posts/{post_id}"
                     
                     msg = format_message(title, page_name, post_time, post_url)
@@ -244,12 +203,7 @@ def monitor():
             except Exception as e:
                 print(f"[!] Lỗi khi quét '{page}': {e}")
             
-            # Nghỉ 3.5 giây giữa mỗi page để an toàn cho tài khoản cookies
-            time.sleep(3.5)
-            
-        if is_first_run:
-            is_first_run = False
-            print("✅ Đã đồng bộ xong bài cũ! Từ giờ hễ có bài mới là bot sẽ báo ngay.")
+            time.sleep(3)
             
         time.sleep(CHECK_INTERVAL)
 
