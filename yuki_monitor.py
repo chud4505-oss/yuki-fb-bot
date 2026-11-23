@@ -9,8 +9,8 @@ from flask import Flask
 from facebook_scraper import get_posts
 
 # ================= CẤU HÌNH CỦA BẠN =================
-TELEGRAM_TOKEN = "NHẬP_BOT_TOKEN_CỦA_BẠN"
-CHAT_ID = "NHẬP_CHAT_ID_CỦA_BẠN"
+TELEGRAM_TOKEN = "9053069383:AAHLYyltFj0TnGYosJ7pjUWtVrXthDf_i0Q"
+CHAT_ID = "9012032761"
 BOT_NAME = "Yuki 2 (VAA)"
 
 # Danh sách 28 Fanpage cần theo dõi (Bao gồm username, ID số và link /share/)
