@@ -1,14 +1,13 @@
 import json
 import os
-import time
 import requests
 from datetime import datetime, timezone, timedelta
 from playwright.sync_api import sync_playwright
 
-TELEGRAM_TOKEN = "9053069383:AAHLYyltFj0TnGYosJ7pjUWtVrXthDf_i0Q"
-CHAT_ID = "9012032761"
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
+CHAT_ID = os.environ.get("CHAT_ID", "")
+FB_COOKIES_RAW = os.environ.get("FB_COOKIES", "")
 BOT_NAME = "Yuki 2 (VAA)"
-COOKIES_FILE = "cookies.txt"
 HISTORY_FILE = "seen_gh_posts.json"
 
 PAGE_URLS = [
@@ -46,24 +45,23 @@ PAGE_URLS = [
 KEYWORDS = ["đăng ký", "sự kiện", "tuyển", "link", "form", "mở đơn", "workshop", "minigame", "ctv", "cuộc thi", "hội thảo"]
 VN_TZ = timezone(timedelta(hours=7))
 
-def load_netscape_cookies(filepath):
+def parse_netscape_cookies(raw_text):
     cookies = []
-    if not os.path.exists(filepath):
+    if not raw_text:
         return cookies
-    with open(filepath, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.startswith("#") or not line.strip():
-                continue
-            parts = line.strip().split("\t")
-            if len(parts) >= 7:
-                cookies.append({
-                    "domain": parts[0],
-                    "path": parts[2],
-                    "secure": parts[3].upper() == "TRUE",
-                    "expires": int(parts[4]) if parts[4].isdigit() else -1,
-                    "name": parts[5],
-                    "value": parts[6]
-                })
+    for line in raw_text.splitlines():
+        if line.startswith("#") or not line.strip():
+            continue
+        parts = line.strip().split("\t")
+        if len(parts) >= 7:
+            cookies.append({
+                "domain": parts[0],
+                "path": parts[2],
+                "secure": parts[3].upper() == "TRUE",
+                "expires": int(parts[4]) if parts[4].isdigit() else -1,
+                "name": parts[5],
+                "value": parts[6]
+            })
     return cookies
 
 def load_seen():
@@ -80,13 +78,16 @@ def save_seen(seen_set):
         json.dump(list(seen_set), f)
 
 def send_telegram(msg):
+    if not TELEGRAM_TOKEN or not CHAT_ID:
+        print("[!] Thiếu TELEGRAM_TOKEN hoặc CHAT_ID trong Secrets!", flush=True)
+        return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(url, json={"chat_id": CHAT_ID, "text": msg, "disable_web_page_preview": False}, timeout=15)
 
 def run_scan():
     seen = load_seen()
     is_first = len(seen) == 0
-    fb_cookies = load_netscape_cookies(COOKIES_FILE)
+    fb_cookies = parse_netscape_cookies(FB_COOKIES_RAW)
     now_vn = datetime.now(VN_TZ).strftime("%d/%m/%Y %H:%M:%S")
 
     with sync_playwright() as p:
@@ -135,7 +136,7 @@ def run_scan():
         browser.close()
     save_seen(seen)
     if is_first:
-        send_telegram(f"🤖 {BOT_NAME} đã khởi tạo xong bộ nhớ 29 page trên GitHub Actions! Sẵn sàng báo tin mỗi 10 phút.")
+        send_telegram(f"🤖 {BOT_NAME} đã kích hoạt chế độ bảo mật Secrets trên GitHub Actions! Sẵn sàng báo tin mỗi 10 phút.")
 
 if __name__ == "__main__":
     run_scan()
