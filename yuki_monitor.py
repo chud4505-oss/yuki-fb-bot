@@ -168,7 +168,7 @@ def monitor():
                     cookies=cookies,
                     options={"posts_per_page": 2}
                 )
-                posts = list(get_posts(
+               posts = list(get_posts(
     page,
     pages=1,
     cookies=cookies,
