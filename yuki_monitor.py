@@ -12,73 +12,42 @@ TELEGRAM_TOKEN = "9053069383:AAHLYyltFj0TnGYosJ7pjUWtVrXthDf_i0Q"
 CHAT_ID = "9012032761"
 BOT_NAME = "Yuki 2 (VAA)"
 
-# Danh sách 29 Fanpage chuẩn xác 100%
 PAGES = [
-    # 1. Trung tâm nghiên cứu và phát triển số
     "drd.vau",
-    # 2. Đoàn hội khoa ngoại ngữ
     "doanhoi.khoangoaingu.vaa",
-    # 3. Đoàn hội khoa kỹ thuật hàng không
     "doanhoikhoakythuathangkhong",
-    # 4. Đoàn hội khoa khai thác hàng không
     "doanhoikhoakhaithachangkhong",
-    # 5. Đoàn hội khoa quản trị kinh doanh
     "vaa.doanhoikhoaquantrikinhdoanh",
-    # 6. VAA Global-Citizen Students Club - GLOCIS
     "61576624683756",
-    # 7. Đoàn hội khoa kinh tế hàng không
     "doanhoi.kinhtehangkhong.vaa",
-    # 8. Đoàn thanh niên - Hội sinh viên
     "DoanTNHoiSV.VAU",
-    # 9. Khoa du lịch và dịch vụ hàng không
     "ftas.vaa.vn",
-    # 10. Khoa ngoại ngữ
     "khoangoainguVAA",
-    # 11. CLB Lý luận trẻ
     "clblyluantrevaa",
-    # 12. CLB Logistic
     "100092618240008",
-    # 13. CLB English
     "3e.vaaec",
-    # 14. CLB Bóng chuyền
     "VolleyballClub.VAA",
-    # 15. Đoàn hội khoa CNTT
     "doanhoikhoacnttvaa",
-    # 16. Đoàn hội khoa Du lịch
     "doanhoiftas",
-    # 17. Đoàn hội khoa Xây dựng
     "61555378444748",
-    # 18. Đoàn hội khoa Điện
     "doankhoadientuvaa",
-    # 19. CLB Sinh viên 5 tốt
     "sv5t.hoisinhvien.vaa",
-    # 20. CLB Bóng rổ
     "aviationbasketball",
-    # 21. CLB Tổ chức sự kiện
     "vepc.vaa",
-    # 22. Đội CTXH
     "VAA.SocialWork",
-    # 23. Tình nguyện
     "TinhNguyenVAA",
-    # 24. CLB UAV
     "FromUAVClub",
-    # 25. CLB AMC
     "aviationmanagementclub",
-    # 26. CLB Nhiếp ảnh
     "vaaphotography",
-    # 27. CLB Kỹ sư trẻ
     "KySuTreVAA",
-    # 28. Công tác sinh viên
     "100063550779612",
-    # 29. CLB Khoa học trẻ
     "vaa.ys2016"
 ]
 
-# Từ khóa lọc bài sự kiện (Để trống [] nếu muốn nhận TẤT CẢ bài đăng mới từ 29 page)
 KEYWORDS = ["đăng ký", "sự kiện", "tuyển", "link", "form", "mở đơn", "workshop", "minigame", "ctv", "cuộc thi", "hội thảo"]
 
-CHECK_INTERVAL = 45       # Nghỉ 45 giây sau mỗi vòng quét 29 page
-MAX_POST_AGE_MINUTES = 30 # Gửi mọi bài đăng mới trong vòng 30 phút gần nhất
+CHECK_INTERVAL = 45
+MAX_POST_AGE_MINUTES = 180
 HISTORY_FILE = "seen_posts.json"
 COOKIES_FILE = "cookies.txt"
 # ======================================================
@@ -118,9 +87,9 @@ def send_telegram(message):
     try:
         res = requests.post(url, json=payload, timeout=15)
         if res.status_code != 200:
-            print(f"[Lỗi Telegram API]: {res.text}")
+            print(f"[Lỗi Telegram API]: {res.text}", flush=True)
     except Exception as e:
-        print(f"[Lỗi kết nối Telegram]: {e}")
+        print(f"[Lỗi kết nối Telegram]: {e}", flush=True)
 
 def check_keywords(text):
     if not KEYWORDS:
@@ -154,27 +123,22 @@ def monitor():
     seen_posts = load_seen_posts()
     cookies = COOKIES_FILE if os.path.exists(COOKIES_FILE) else None
     
-    print(f"🚀 {BOT_NAME} đã sẵn sàng! Bắt đầu quét {len(PAGES)} Fanpage...")
-    send_telegram(f"🤖 {BOT_NAME} đã cập nhật đủ {len(PAGES)} Fanpage và đang hoạt động!")
+    print(f"🚀 {BOT_NAME} đã sẵn sàng! Cookies: {'Có' if cookies else 'Không'}", flush=True)
+    send_telegram(f"🤖 {BOT_NAME} đã khởi động chế độ kiểm tra chi tiết!")
 
     while True:
         now_utc = datetime.now(timezone.utc)
         
         for page in PAGES:
             try:
-                posts = get_posts(
+                posts = list(get_posts(
                     page,
                     pages=1,
                     cookies=cookies,
-                    options={"posts_per_page": 2}
-                )
-               posts = list(get_posts(
-    page,
-    pages=1,
-    cookies=cookies,
-    options={"posts_per_page": 4}
-))
-print(f"🔎 Quét '{page}': tìm thấy {len(posts)} bài")
+                    options={"posts_per_page": 4}
+                ))
+                print(f"🔎 Quét '{page}': tìm thấy {len(posts)} bài", flush=True)
+                
                 for post in posts:
                     post_id = post.get("post_id")
                     if not post_id or post_id in seen_posts:
@@ -183,7 +147,6 @@ print(f"🔎 Quét '{page}': tìm thấy {len(posts)} bài")
                     seen_posts.add(post_id)
                     save_seen_posts(seen_posts)
                     
-                    # Kiểm tra thời gian đăng (chỉ báo bài trong vòng 30 phút gần nhất)
                     raw_time = post.get("time")
                     if isinstance(raw_time, datetime):
                         post_utc = raw_time.replace(tzinfo=timezone.utc) if raw_time.tzinfo is None else raw_time
@@ -204,10 +167,10 @@ print(f"🔎 Quét '{page}': tìm thấy {len(posts)} bài")
                     
                     msg = format_message(title, page_name, post_time, post_url)
                     send_telegram(msg)
-                    print(f"[+] Đã gửi thông báo mới từ {page_name}: {title}")
+                    print(f"[+] Đã gửi thông báo mới từ {page_name}: {title}", flush=True)
                     
             except Exception as e:
-                print(f"[!] Lỗi khi quét '{page}': {e}")
+                print(f"[!] Lỗi khi quét '{page}': {e}", flush=True)
             
             time.sleep(3)
             
