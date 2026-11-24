@@ -2,7 +2,7 @@ name: Yuki 24/7 Facebook Scanner
 
 on:
   schedule:
-    - cron: '*/10 0-16 * * *' # Chạy mỗi 10 phút từ 07:00 đến 23:50 giờ Việt Nam
+    - cron: '*/10 0-16 * * *'
   workflow_dispatch:
 
 permissions:
@@ -21,6 +21,10 @@ jobs:
           pip install -r requirements.txt
           playwright install chromium
       - name: Quét 29 Fanpage
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          FB_COOKIES: ${{ secrets.FB_COOKIES }}
         run: python yuki_monitor.py
       - name: Lưu lịch sử bài đã quét
         run: |
