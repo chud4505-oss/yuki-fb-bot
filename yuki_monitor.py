@@ -135,8 +135,6 @@ def run_scan():
 
         browser.close()
     save_seen(seen)
-    if is_first:
-        send_telegram(f"🤖 {BOT_NAME} đã kích hoạt chế độ bảo mật Secrets trên GitHub Actions! Sẵn sàng báo tin mỗi 10 phút.")
-
+    
 if __name__ == "__main__":
     run_scan()
