@@ -168,7 +168,13 @@ def monitor():
                     cookies=cookies,
                     options={"posts_per_page": 2}
                 )
-                
+                posts = list(get_posts(
+    page,
+    pages=1,
+    cookies=cookies,
+    options={"posts_per_page": 4}
+))
+print(f"🔎 Quét '{page}': tìm thấy {len(posts)} bài")
                 for post in posts:
                     post_id = post.get("post_id")
                     if not post_id or post_id in seen_posts:
